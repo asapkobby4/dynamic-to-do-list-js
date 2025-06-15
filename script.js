@@ -1,51 +1,87 @@
-// Wait for the DOM to fully load before running the script
 document.addEventListener('DOMContentLoaded', function () {
     // Select DOM elements
-    const addButton = document.getElementById('add-task-btn'); // Add Task button
-    const taskInput = document.getElementById('task-input');   // Input field for task
-    const taskList = document.getElementById('task-list');     // UL element to hold tasks
+    const addButton = document.getElementById('add-task-btn');
+    const taskInput = document.getElementById('task-input');
+    const taskList = document.getElementById('task-list');
 
-    // Function to add a new task
-    function addTask() {
-        const taskText = taskInput.value.trim(); // Get and trim user input
+    // Load tasks from Local Storage on page load
+    loadTasks();
 
-        // If input is empty, alert the user
-        if (taskText === '') {
+    // Function to add a task to the list
+    function addTask(taskText, save = true) {
+        // Prevent empty task entries
+        if (!taskText || taskText.trim() === '') {
             alert('Please enter a task.');
             return;
         }
 
-        // Create a new list item (li) for the task
+        // Create list item for task
         const li = document.createElement('li');
         li.textContent = taskText;
 
-        // Create a remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Remove';
-        removeBtn.className = 'remove-btn';
+        // Create remove button
+           const removeBtn = document.createElement('button');
+           removeBtn.textContent = 'Remove';
+           removeBtn.classList.add('remove-btn');
 
-        // Add event to remove the task when button is clicked
+
+        // Remove the task from the list and Local Storage
         removeBtn.onclick = function () {
             taskList.removeChild(li);
+            removeFromLocalStorage(taskText);
         };
 
-        // Append the remove button to the list item
+        // Append button and item
         li.appendChild(removeBtn);
-
-        // Add the list item to the task list
         taskList.appendChild(li);
 
-        // Clear the input field for the next task
-        taskInput.value = '';
+        // Save to Local Storage if required
+        if (save) {
+            saveToLocalStorage(taskText);
+        }
     }
 
-    // Event listener for clicking the "Add Task" button
-    addButton.addEventListener('click', addTask);
+    // Save task to Local Storage
+    function saveToLocalStorage(taskText) {
+        const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        storedTasks.push(taskText);
+        localStorage.setItem('tasks', JSON.stringify(storedTasks));
+    }
 
-    // Event listener for pressing the Enter key in the input field
+    // Remove task from Local Storage
+    function removeFromLocalStorage(taskText) {
+        let storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        storedTasks = storedTasks.filter(task => task !== taskText);
+        localStorage.setItem('tasks', JSON.stringify(storedTasks));
+    }
+
+    // Load tasks from Local Storage and display
+    function loadTasks() {
+        const storedTasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        storedTasks.forEach(taskText => addTask(taskText, false));
+    }
+
+    // Event listener for button click
+    addButton.addEventListener('click', function () {
+        const taskText = taskInput.value.trim();
+        if (taskText !== '') {
+            addTask(taskText);
+            taskInput.value = '';
+        } else {
+            alert('Please enter a task.');
+        }
+    });
+
+    // Allow task addition via Enter key
     taskInput.addEventListener('keypress', function (event) {
         if (event.key === 'Enter') {
-            addTask();
+            const taskText = taskInput.value.trim();
+            if (taskText !== '') {
+                addTask(taskText);
+                taskInput.value = '';
+            } else {
+                alert('Please enter a task.');
+            }
         }
     });
 });
